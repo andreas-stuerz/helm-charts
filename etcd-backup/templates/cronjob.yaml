@@ -1,0 +1,86 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ include "etcd-backup.fullname" . }}
+  labels:
+    {{- include "etcd-backup.labels" . | nindent 4 }}
+spec:
+  concurrencyPolicy: Forbid
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  successfulJobsHistoryLimit: {{ .Values.cronjob.historyLimit }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+        {{- with .Values.cronjob.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 8 }}
+        {{- end }}
+          labels:
+            {{- include "etcd-backup.selectorLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: {{ .Values.cronjob.restartPolicy }}
+          {{- if .Values.securityContext.enabled }}
+          securityContext:
+            fsGroup: {{ .Values.securityContext.fsGroup }}
+            runAsUser: {{ .Values.securityContext.runAsUser }}
+          {{- end }}
+          containers:
+            - name: {{ .Chart.Name }}
+              image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command:
+                - /scripts/etcd-snapshot-backup.sh
+              env:
+                - name: CRONJOB_DEBUG
+                  value: {{ ternary "true" "false" .Values.cronjob.debug | quote }}
+                - name: ETCDCTL_API
+                  value: "{{ .Values.etcdctl.api_version }}"
+                - name: ETCDCTL_CERT
+                  value: "{{ .Values.etcdctl.cert }}"
+                - name: ETCDCTL_KEY
+                  value: "{{ .Values.etcdctl.key }}"
+                - name: ETCDCTL_CACERT
+                  value: "{{ .Values.etcdctl.cacert }}"
+                - name: NODE_IP
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.hostIP
+                - name: ETCDCTL_ENDPOINTS
+                  value: "{{ .Values.etcdctl.endpoint.proto }}://{{ .Values.etcdctl.endpoint.host }}:{{ .Values.etcdctl.endpoint.port }}"
+              volumeMounts:
+                - name: etcd-certs
+                  mountPath: {{ .Values.volumes.certs.mountpath }}
+                  readOnly: true
+                - name: backup-dir
+                  mountPath: {{ .Values.volumes.backup_dir.mountpath }}
+                - name: scripts
+                  mountPath: /scripts/etcd-snapshot-backup.sh
+                  subPath: etcd-snapshot-backup.sh
+                  readOnly: true
+          volumes:
+            - name: etcd-certs
+              hostPath:
+                path: {{ .Values.volumes.certs.hostpath }}
+            - name: backup-dir
+              hostPath:
+                path: {{ .Values.volumes.backup_dir.hostpath }}
+            - name: scripts
+              configMap:
+                defaultMode: 0700
+                name: {{ include "etcd-backup.fullname" . }}-scripts
+          hostNetwork: {{ .Values.hostNetwork }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+

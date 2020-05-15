@@ -2,56 +2,58 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
+cronjob:
+  # show debug output in scripts
+  debug: true
+  ## Schedule in Cron format to save snapshots
+  schedule: "*/30 * * * *"
+  ## delete backups after backupRetention days
+  backupRetention: 0
+  ## The filename for the snapshot
+  snapshotFilename: "etcd-snapshot-$(date +%Y-%m-%d_%H:%M:%S_%Z).db"
+  ## Number of successful finished jobs to retain
+  historyLimit: 1
+  restartPolicy: OnFailure
+  podAnnotations: {}
 
 image:
-  repository: nginx
+  registry: k8s.gcr.io
+  repository: etcd-amd64
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart version.
-  tag: ""
 
-imagePullSecrets: []
+etcdctl:
+  api_version: "3"
+  cert: /certs/peer.crt
+  key: /certs/peer.key
+  cacert: /certs/ca.crt
+  endpoint:
+    host: "$(NODE_IP)"
+    proto: https
+    port: 2379
+
+# use the hostNetwork
+hostNetwork: true
+
+volumes:
+  certs:
+    hostpath: /etc/kubernetes/pki/etcd
+    mountpath: /certs
+  backup_dir:
+    hostpath: /data/backup
+    mountpath: /data/backup
+
 nameOverride: ""
 fullnameOverride: ""
 
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
-podAnnotations: {}
-
 podSecurityContext: {}
-  # fsGroup: 2000
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
-service:
-  type: ClusterIP
-  port: 80
-
-ingress:
+## Kubernetes Security Context
+## https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+securityContext:
   enabled: false
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths: []
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  fsGroup: 1001
+  runAsUser: 1001
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -65,15 +67,14 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+# The Cronjobs could run on all master nodes
+nodeSelector:
+  node-role.kubernetes.io/master: ""
 
-nodeSelector: {}
-
-tolerations: []
+# Ignore NoSchedule on master Nodes
+tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
+    operator: Exists
 
 affinity: {}
