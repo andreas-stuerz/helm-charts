@@ -4,11 +4,11 @@
 
 cronjob:
   # show debug output in scripts
-  debug: true
+  debug: false
   ## Schedule in Cron format to save snapshots
-  schedule: "*/30 * * * *"
+  schedule: "* */1 * * *"
   ## delete backups after backupRetention days
-  backupRetention: 0
+  backupRetention: 1
   ## The filename for the snapshot
   snapshotFilename: "etcd-snapshot-$(date +%Y-%m-%d_%H:%M:%S_%Z).db"
   ## Number of successful finished jobs to retain

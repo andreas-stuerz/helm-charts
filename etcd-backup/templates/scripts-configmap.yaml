@@ -6,26 +6,19 @@ metadata:
 data:
   etcd-snapshot-backup.sh: |-
     #!/bin/sh
-    execute_cmd() {
-      cmd=$1
-      if [ "${CRONJOB_DEBUG}" = true ]; then
-        echo $cmd
-        $cmd 2>&1
-      else
-        $cmd
-      fi
-    }
     BACKUP_DIR="{{ .Values.volumes.backup_dir.mountpath }}"
     BACKUP_FILE="${BACKUP_DIR}/{{ .Values.cronjob.snapshotFilename }}"
-    echo ${ETCDCTL_ENDPOINTS}
+
     if [ "${CRONJOB_DEBUG}" = true ]; then
-      execute_cmd "find ${BACKUP_DIR} -mtime +{{ .Values.cronjob.backupRetention }} -exec ls -la {} \;"
+      find ${BACKUP_DIR} -mtime +{{ .Values.cronjob.backupRetention }} -exec ls -la {} \;
     else
-      execute_cmd "find ${BACKUP_DIR} -mtime +{{ .Values.cronjob.backupRetention }} -exec rm {} \;"
+      find ${BACKUP_DIR} -mtime +{{ .Values.cronjob.backupRetention }} -exec rm {} \;
     fi
+
     # take the snapshot
-    execute_cmd "etcdctl snapshot save ${BACKUP_FILE}"
+    etcdctl snapshot save ${BACKUP_FILE}
+
     # verify snapshot
-    execute_cmd "etcdctl --write-out=table snapshot status ${BACKUP_FILE}"
+    etcdctl --write-out=table snapshot status ${BACKUP_FILE}
 
 
