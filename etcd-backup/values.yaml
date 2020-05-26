@@ -11,6 +11,8 @@ cronjob:
   backupRetention: 1
   ## The filename for the snapshot
   snapshotFilename: "etcd-snapshot-$(date +%Y-%m-%d_%H:%M:%S_%Z).db"
+  ## The filemode for the snapshot
+  snapshotFilepermission: 640
   ## Number of successful finished jobs to retain
   historyLimit: 1
   restartPolicy: OnFailure

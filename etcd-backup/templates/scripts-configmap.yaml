@@ -21,4 +21,7 @@ data:
     # verify snapshot
     etcdctl --write-out=table snapshot status ${BACKUP_FILE}
 
+    # secure permission
+    chmod {{ .Values.cronjob.snapshotFilepermission }} {{ .Values.cronjob.snapshotFilename }}
+
 
