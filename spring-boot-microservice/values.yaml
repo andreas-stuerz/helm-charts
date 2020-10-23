@@ -80,11 +80,7 @@ container:
 
 service:
   type: ClusterIP
-  ports:
-    - port: 80
-      targetPort: http
-      protocol: TCP
-      name: http
+  port: 80
 
 ingress:
   enabled: false
