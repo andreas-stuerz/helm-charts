@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "uwsgi-microservice.fullname" . }}-test-connection"
+  labels:
+    {{- include "uwsgi-microservice.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "uwsgi-microservice.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never

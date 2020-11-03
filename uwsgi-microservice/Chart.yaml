@@ -1,0 +1,9 @@
+apiVersion: v2
+name: uwsgi-microservice
+description: A Helm chart for a microservice served by the uwsgi application server
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+maintainers:
+  - name: "Andreas Stuerz"
+    email: "it-solutions@andreas-stuerz.de"
