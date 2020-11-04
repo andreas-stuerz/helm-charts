@@ -9,13 +9,8 @@ spec:
   replicas: {{ .Values.replicaCount }}
 {{- end }}
   strategy:
-    {{- if .Values.strategy }}
-    {{ toYaml .Values.strategy | indent 4 }}
-    {{- else }}
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+  {{- with .Values.strategy }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   selector:
     matchLabels:
