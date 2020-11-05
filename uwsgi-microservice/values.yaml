@@ -44,19 +44,20 @@ securityContext: {}
 container:
   env: []
   volumeMounts: []
+  command: ["uwsgi"]
+  args: []
   ports:
     - name: http
       containerPort: 80
       protocol: TCP
   livenessProbe:
-    initialDelaySeconds: 0
-    httpGet:
-      path: /health
-      port: http
+    exec:
+      command:
+        - echo
   readinessProbe:
-    httpGet:
-      path: /health
-      port: http
+    exec:
+      command:
+        - echo
 
 service:
   type: ClusterIP
