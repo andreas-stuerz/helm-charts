@@ -71,7 +71,7 @@ resources: {}
 
 # The Cronjobs could run on all master nodes
 nodeSelector:
-  node-role\.kubernetes\.io/control-plane: ""
+  node-role.kubernetes.io/control-plane: ""
 
 # Ignore NoSchedule on master Nodes
 tolerations:
